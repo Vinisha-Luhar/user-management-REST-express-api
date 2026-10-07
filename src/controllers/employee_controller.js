@@ -5,7 +5,30 @@ const asyncHandler = require('../utils/async_handler.js');
 const appError = require('../utils/app_error.js');
 
 const createEmployee = asyncHandler((async(req, res)=>{
-    const employee = await employeeService.createEmployee(req.body);
+
+    const {firstName,
+        lastName,
+        email,
+        phone,
+        department,
+        designation,
+        salary,
+        joiningDate,
+        status
+    } = req.body;
+
+    const employeeData = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        department: department.trim(),
+        designation: designation.trim(),
+        salary,
+        joiningDate,
+        status
+    }
+    const employee = await employeeService.createEmployee(employeeData);
 
     res.status(201).json({
         success: true,
