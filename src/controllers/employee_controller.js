@@ -6,29 +6,29 @@ const appError = require('../utils/app_error.js');
 
 const createEmployee = asyncHandler((async(req, res)=>{
 
-    const {firstName,
-        lastName,
-        email,
-        phone,
-        department,
-        designation,
-        salary,
-        joiningDate,
-        status
-    } = req.body;
+    // const {firstName,
+    //     lastName,
+    //     email,
+    //     phone,
+    //     department,
+    //     designation,
+    //     salary,
+    //     joiningDate,
+    //     status
+    // } = req.body;
 
-    const employeeData = {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim().toLowerCase(),
-        phone: phone.trim(),
-        department: department.trim(),
-        designation: designation.trim(),
-        salary,
-        joiningDate,
-        status
-    }
-    const employee = await employeeService.createEmployee(employeeData);
+    // const employeeData = {
+    //     firstName: firstName.trim(),
+    //     lastName: lastName.trim(),
+    //     email: email.trim().toLowerCase(),
+    //     phone: phone.trim(),
+    //     department: department.trim(),
+    //     designation: designation.trim(),
+    //     salary,
+    //     joiningDate,
+    //     status
+    // }
+    const employee = await employeeService.createEmployee(req.body);
 
     res.status(201).json({
         success: true,
@@ -38,10 +38,17 @@ const createEmployee = asyncHandler((async(req, res)=>{
 }));
 
 const getEmployees = asyncHandler((async (req,res) => {
-    const page = Math.max(Number(req.query.page) || 1, 1);
-    const limit = Math.min(Math.max(Number(req.query.limit || 10),1),100);
+    // const page = Math.max(Number(req.query.page) || 1, 1);
+    // const limit = Math.min(Math.max(Number(req.query.limit || 10),1),100);
 
-    const {search, department, status} = req.query;
+    // const {search, department, status} = req.query;
+
+    const {
+        page,
+        limit,
+        search,
+        department,
+        status} = req.query;
 
     const result = await employeeService.getEmployees({
         page,
@@ -64,14 +71,20 @@ const getEmployees = asyncHandler((async (req,res) => {
 }));
 
 const getEmployeeById = asyncHandler((async (req,res)=>{
-    const {id} = req.params;
+    // const {id} = req.params;
 
-    if(!mongoose.Types.ObjectId.isValid(id))
-    {
-        throw new appError("Invalid Employee Id",400);
-    }
+    // if(!mongoose.Types.ObjectId.isValid(id))
+    // {
+    //     throw new appError("Invalid Employee Id",400);
+    // }
 
-    const employee = await employeeService.getEmployeeById(id);
+    // const employee = await employeeService.getEmployeeById(id);
+
+    // if(!employee){
+    //     throw new appError("Employee Not Found",404);
+    // }
+
+    const employee = await employeeService.getEmployeeById(req.params.id);
 
     if(!employee){
         throw new appError("Employee Not Found",404);
@@ -84,13 +97,13 @@ const getEmployeeById = asyncHandler((async (req,res)=>{
 }));
 
 const updateEmployee = asyncHandler((async (req,res)=>{
-    const {id} = req.params;
+    // const {id} = req.params;
 
-    if(!mongoose.Types.ObjectId.isValid(id)){
-        throw new appError("Invalid Employee ID",400);
-    }
+    // if(!mongoose.Types.ObjectId.isValid(id)){
+    //     throw new appError("Invalid Employee ID",400);
+    // }
 
-    const employee = await employeeService.updateEmployee(id, req.body);
+    const employee = await employeeService.updateEmployee(req.params.id, req.body);
 
     if(!employee){
         throw new appError("Employee Not Found",404);
@@ -104,11 +117,11 @@ const updateEmployee = asyncHandler((async (req,res)=>{
 }));
 
 const deleteEmployee = asyncHandler((async (req,res)=>{
-    const {id} = req.params;
+    // const {id} = req.params;
 
-    if(!mongoose.Types.ObjectId.isValid(id)){
-        throw new appError("Invalid Employee ID",400);
-    }
+    // if(!mongoose.Types.ObjectId.isValid(id)){
+    //     throw new appError("Invalid Employee ID",400);
+    // }
 
     const employee = await employeeService.deleteEmployee(id);
 
