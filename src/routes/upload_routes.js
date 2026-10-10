@@ -21,17 +21,35 @@ const storage = multer.diskStorage({
 });
 
 
+
 const allowedMimeTypes = [
+    // Images
     "image/jpeg",
     "image/png",
-    "image/webp"
+    "image/webp",
+
+    // PDF
+    "application/pdf",
+
+    // Word documents
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+
+    // Excel documents
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 ];
 
 const allowedExtensions = [
     ".jpg",
     ".jpeg",
     ".png",
-    ".webp"
+    ".webp",
+    ".pdf",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx"
 ];
 
 const upload = multer({
@@ -43,14 +61,21 @@ const upload = multer({
     },
 
     fileFilter: (req, file, callback) => {
-        const extension = path.extname(file.originalname).toLowerCase();
+        const extension = path
+            .extname(file.originalname)
+            .toLowerCase();
 
-        if (
-            !allowedExtensions.includes(extension) ||
-            !allowedMimeTypes.includes(file.mimetype)
-        ) {
+        const isAllowedExtension =
+            allowedExtensions.includes(extension);
+
+        const isAllowedMimeType =
+            allowedMimeTypes.includes(file.mimetype);
+
+        if (!isAllowedExtension || !isAllowedMimeType) {
             return callback(
-                new Error("Only JPG, PNG, and WebP images are allowed")
+                new Error(
+                    "Only images, PDF, Word, and Excel files are allowed"
+                )
             );
         }
 
@@ -58,21 +83,23 @@ const upload = multer({
     }
 });
 
-router.post("/image",upload.single("image"),(req,res)=>{
-    if(!req.file){
+router.post("/upload", upload.single("file"), (req, res) => {
+    if (!req.file) {
         return res.status(400).json({
             success: false,
-            message: "Please upload an image"
+            message: "Please select a file to upload"
         });
     }
 
-    res.status(201).json({
+    return res.status(201).json({
         success: true,
-        message: "Image Uploaded Successfully",
+        message: "File uploaded successfully",
         file: {
-            origionalName: req.file.originalname,
-            savedname: req.file.filename,
+            originalName: req.file.originalname,
+            savedName: req.file.filename,
+            mimeType: req.file.mimetype,
             size: req.file.size,
+            path: req.file.path
         }
     });
 });
