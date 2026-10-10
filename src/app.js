@@ -5,6 +5,7 @@ const logger = require('./middlewares/logger_middleware.js');
 const errorHandler = require('./middlewares/error_middleware.js');
 const employeeRoutes = require('./routes/employee_routes.js');
 const authRoutes = require("./routes/auth_routes.js");
+const uploadRoutes = require("./routes/upload_routes.js");
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(logger);
 
 app.use("/api/v1/employees", employeeRoutes);
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/files", uploadRoutes);
 
 app.use(errorHandler);
 
