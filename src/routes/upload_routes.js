@@ -104,6 +104,46 @@ router.post("/upload", upload.single("file"), (req, res) => {
     });
 });
 
+
+router.get("/", (req, res) => {
+    const files = fs.readdirSync(uploadDir);
+
+    return res.status(200).json({
+        success: true,
+        count: files.length,
+        files: files
+    });
+});
+
+
+router.get("/:filename", (req, res, next) => {
+    const filename = req.params.filename;
+
+    // Prevent users from accessing files outside the uploads folder.
+    if (path.basename(filename) !== filename) {
+        return res.status(400).json({
+            success: false,
+            message: "Invalid filename"
+        });
+    }
+
+    const filePath = path.join(uploadDir, filename);
+
+    return res.download(filePath, filename, (err) => {
+        if (err && !res.headersSent) {
+            if (err.status === 404 || err.code === "ENOENT") {
+                return res.status(404).json({
+                    success: false,
+                    message: "File not found"
+                });
+            }
+
+            next(err);
+        }
+    });
+});
+
+
 router.use((err, req, res, next) => {
     if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {
