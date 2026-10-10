@@ -20,10 +20,41 @@ const storage = multer.diskStorage({
     }
 });
 
+
+const allowedMimeTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+];
+
+const allowedExtensions = [
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp"
+];
+
 const upload = multer({
     storage: storage,
+
     limits: {
-        fileSize: 10 * 1024 * 1024
+        fileSize: 10 * 1024 * 1024,
+        files: 1
+    },
+
+    fileFilter: (req, file, callback) => {
+        const extension = path.extname(file.originalname).toLowerCase();
+
+        if (
+            !allowedExtensions.includes(extension) ||
+            !allowedMimeTypes.includes(file.mimetype)
+        ) {
+            return callback(
+                new Error("Only JPG, PNG, and WebP images are allowed")
+            );
+        }
+
+        callback(null, true);
     }
 });
 
@@ -44,6 +75,38 @@ router.post("/image",upload.single("image"),(req,res)=>{
             size: req.file.size,
         }
     });
+});
+
+router.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+            return res.status(413).json({
+                success: false,
+                message: "File size must not exceed 10 MB"
+            });
+        }
+
+        if (err.code === "LIMIT_FILE_COUNT") {
+            return res.status(400).json({
+                success: false,
+                message: "Only one file can be uploaded at a time"
+            });
+        }
+
+        return res.status(400).json({
+            success: false,
+            message: "Invalid file upload"
+        });
+    }
+
+    if (err) {
+        return res.status(400).json({
+            success: false,
+            message: err.message || "File upload failed"
+        });
+    }
+
+    next();
 });
 
 module.exports = router;
