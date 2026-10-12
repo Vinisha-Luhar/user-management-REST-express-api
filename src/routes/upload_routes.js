@@ -2,6 +2,8 @@ const express = require("express");
 const path = require("path");
 const multer = require("multer");
 const fs = require("fs");
+const { Readable } = require("stream");
+const { getGridFSBucket } = require("../utils/gridfs");
 
 const router = express.Router();
 
@@ -83,13 +85,45 @@ const upload = multer({
     }
 });
 
+
+const gridFSUpload = multer({
+    storage: multer.memoryStorage(),
+
+    limits: {
+        fileSize: 10 * 1024 * 1024,
+        files: 1
+    },
+
+    fileFilter: (req, file, callback) => {
+        const extension = path
+            .extname(file.originalname)
+            .toLowerCase();
+
+        const isAllowedExtension =
+            allowedExtensions.includes(extension);
+
+        const isAllowedMimeType =
+            allowedMimeTypes.includes(file.mimetype);
+
+        if (!isAllowedExtension || !isAllowedMimeType) {
+            return callback(
+                new Error(
+                    "Only images, PDF, Word, and Excel files are allowed"
+                )
+            );
+        }
+
+        callback(null, true);
+    }
+});
+
+
 router.post("/upload", upload.single("file"), (req, res) => {
     if (!req.file) {
         return res.status(400).json({
             success: false,
             message: "Please select a file to upload"
-        });
-    }
+        });   }
 
     return res.status(201).json({
         success: true,
@@ -175,5 +209,62 @@ router.use((err, req, res, next) => {
 
     next();
 });
+
+
+router.post(
+    "/upload-gridfs",
+    gridFSUpload.single("file"),
+    async (req, res, next) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Please select a file to upload"
+                });
+            }
+
+            const bucket = getGridFSBucket();
+
+            const extension = path
+                .extname(req.file.originalname)
+                .toLowerCase();
+
+            const uniqueFilename =
+                `${Date.now()}-${Math.round(Math.random() * 1e9)}${extension}`;
+
+            const uploadStream = bucket.openUploadStream(
+                uniqueFilename,
+                {
+                    metadata: {
+                        originalName: req.file.originalname,
+                        contentType: req.file.mimetype
+                    }
+                }
+            );
+
+            await new Promise((resolve, reject) => {
+                uploadStream.once("finish", resolve);
+                uploadStream.once("error", reject);
+
+                Readable.from([req.file.buffer]).pipe(uploadStream);
+            });
+
+            return res.status(201).json({
+                success: true,
+                message: "File uploaded to GridFS successfully",
+                file: {
+                    id: uploadStream.id.toString(),
+                    filename: uniqueFilename,
+                    originalName: req.file.originalname,
+                    contentType: req.file.mimetype,
+                    size: req.file.size
+                }
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
 
 module.exports = router;
